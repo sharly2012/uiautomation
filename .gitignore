@@ -1,0 +1,14 @@
+*~
+.DS_Store
+.idea
+./settings.py
+/venv
+
+
+*.log
+*.pyc
+*.ini
+/report/
+/.pytest_cache
+/html
+/xml
