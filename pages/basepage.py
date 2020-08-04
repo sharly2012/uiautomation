@@ -15,6 +15,23 @@ from common.baseutil import root_path
 from unittest import TestCase
 
 
+def fail_screenshot(func):
+    def wrapper(self, *args, **kwargs):
+        try:
+            result = func(self, *args, **kwargs)
+            return result
+        except Exception as e:
+            logger.info('{} execute appear error: {}'.format(func.__name__, e))
+            cur_time = time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
+            file_name = os.path.join(root_path, 'screenshots', func.__name__ + cur_time + '.png')
+            self.driver.get_screenshot_as_file(file_name)
+            allure.attach.file(file_name, allure.attachment_type.PNG)
+            logger.info('The fail screenshot had been saved in {}'.format(file_name))
+            raise Exception(e)
+
+    return wrapper
+
+
 class BasePage(object):
 
     def __init__(self, driver):
@@ -43,6 +60,7 @@ class BasePage(object):
         logger.info("当前页面的title为: %s" % self.driver.title)
         return self.driver.title
 
+    @fail_screenshot
     def find_element(self, *locator):
         """
         根据locator查找页面元素
@@ -55,11 +73,9 @@ class BasePage(object):
             return element
         except NoSuchElementException:
             logger.error('Can not find the element: %s' % locator[1])
-            self.get_screen_img()
             raise
         except TimeoutException:
             logger.error('Can not find element: %s in 10 seconds' % locator[1])
-            self.get_screen_img()
             raise
 
     def find_elements(self, *locator):

@@ -12,7 +12,7 @@ class LoginPage(BasePage):
     # 密码输入框
     password = (By.XPATH, "//input[@placeholder='密码']")
     # 登录按钮
-    login_button = (By.XPATH, "//input[contains(@value, '登录')]")
+    login_button = (By.XPATH, "//button[contains(., '登录')]")
     # 登录错误提示信息
     error_meg = (By.XPATH, "//form[@name='loginForm']/div")
 
