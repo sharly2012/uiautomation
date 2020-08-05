@@ -12,6 +12,9 @@ import random
 import string
 
 root_path = os.path.split(os.path.abspath(os.path.dirname(__file__)))[0]
+cur_date = time.strftime('%Y-%m-%d')
+cur_time = time.strftime('%H:%M:%S')
+cur_datetime = time.strftime('%Y-%m-%d %H:%M:%S')
 
 
 def get_config_value(section, key):
@@ -147,11 +150,3 @@ def get_dict_values(search_dict, search_key):
 
 def gen_random_string(str_len=10):
     return ''.join(random.sample(string.ascii_letters + string.digits, str_len))
-
-
-def current_date():
-    return time.strftime('%Y-%m-%d')
-
-
-def current_time():
-    return time.strftime('%H:%M:%S')

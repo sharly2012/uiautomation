@@ -3,8 +3,6 @@
 # @Author: Samuel
 
 import smtplib
-import os
-import configparser
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from common.baseutil import get_config_value

@@ -1,48 +1,59 @@
-#!/usr/bin/python3
 # -*- coding: utf-8 -*-
-# @Author: Samuel
-
-import logging
-import time
 import os
-from common.baseutil import root_path
+import logging
+import inspect
+from common.baseutil import root_path, cur_date, cur_datetime
+
+dir_folder = os.path.join(root_path, "logs", cur_date)
+
+if not os.path.exists(dir_folder):
+    os.mkdir(dir_folder)
+
+handlers = {
+    logging.DEBUG: os.path.join(dir_folder, '%s_debug.log' % cur_date),
+    logging.INFO: os.path.join(dir_folder, '%s_info.log' % cur_date),
+    logging.WARNING: os.path.join(dir_folder, '%s_warning.log' % cur_date),
+    logging.ERROR: os.path.join(dir_folder, '%s_error.log' % cur_date),
+    logging.CRITICAL: os.path.join(dir_folder, '%s_critical.log' % cur_date),
+}
 
 
 class Logger(object):
 
     def __init__(self):
-        """
-        将日志保存到指定的路径文件中
-        指定日志的级别，以及调用文件
-        """
+        self._loggers = {}
 
-        # 创建logger文件
-        self.logger = logging.getLogger()
-        self.logger.setLevel(logging.INFO)
+        for level in handlers.keys():
+            logger = logging.getLogger(str(level))
+            logger.addHandler(logging.FileHandler(filename=handlers[level], encoding='utf-8'))
+            logger.addHandler(logging.StreamHandler())
+            logger.setLevel(level)
+            self._loggers.update({level: logger})
 
-        # 创建一个handle，用来写入日志文件
-        now = time.strftime("%Y-%m-%d")
-        log_path = os.path.join(root_path, 'logs', now + '.log')
+    @staticmethod
+    def get_log_message(level, message):
+        frame, filename, line_no, function_name, code, unknown_field = inspect.stack()[2]
+        return "[%s] [%s] [%s:%s - %s]: %s" % (cur_datetime, level, filename, line_no, function_name, message)
 
-        file_handle = logging.FileHandler(log_path, encoding="utf-8")
-        file_handle.setLevel(logging.INFO)
+    def info(self, message):
+        message = self.get_log_message("info", message)
+        self._loggers[logging.INFO].info(message)
 
-        # 创建一个handle，用来输入日志到控制台
-        control_handle = logging.StreamHandler()
-        control_handle.setLevel(logging.INFO)
+    def error(self, message):
+        message = self.get_log_message("error", message)
+        self._loggers[logging.ERROR].error(message)
 
-        # 将输出的handle格式进行转换
-        formatter = logging.Formatter(
-            '%(asctime)s - %(levelname)s - %(filename)s:%(funcName)s:%(lineno)d - %(message)s')
-        file_handle.setFormatter(formatter)
-        control_handle.setFormatter(formatter)
+    def warning(self, message):
+        message = self.get_log_message("warning", message)
+        self._loggers[logging.WARNING].warning(message)
 
-        # 给logger添加handle
-        self.logger.addHandler(file_handle)
-        self.logger.addHandler(control_handle)
+    def debug(self, message):
+        message = self.get_log_message("debug", message)
+        self._loggers[logging.DEBUG].debug(message)
 
-    def get_log(self):
-        return self.logger
+    def critical(self, message):
+        message = self.get_log_message("critical", message)
+        self._loggers[logging.CRITICAL].critical(message)
 
 
-logger = Logger().get_log()
+logger = Logger()
