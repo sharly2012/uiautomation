@@ -7,6 +7,13 @@ from selenium.webdriver.common.by import By
 
 
 class LoginPage(BasePage):
+
+    def __init__(self, driver):
+        super(LoginPage, self).__init__(driver)
+
+    def page_confirm(self):
+        self.is_visibility(self.mobile)
+
     # 手机号输入框
     mobile = (By.XPATH, "//input[@placeholder='手机号']")
     # 密码输入框

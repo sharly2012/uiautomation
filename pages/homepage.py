@@ -7,6 +7,13 @@ from selenium.webdriver.common.by import By
 
 
 class HomePage(BasePage):
+
+    def __init__(self, driver):
+        super(HomePage, self).__init__(driver)
+
+    def page_confirm(self):
+        self.is_visibility(self.moseeker_icon)
+
     # 左侧工具栏图标
     moseeker_icon = (By.XPATH, "//div[@class='Sidebar-logo-wrapper']")
     # 左侧工具栏

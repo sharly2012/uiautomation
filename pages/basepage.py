@@ -5,6 +5,7 @@
 import time
 import allure
 import os
+from abc import ABCMeta, abstractmethod
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.select import Select
 from selenium.common.exceptions import *
@@ -32,7 +33,7 @@ def fail_screenshot(func):
     return wrapper
 
 
-class BasePage(object):
+class BasePage(metaclass=ABCMeta):
 
     def __init__(self, driver):
         """
@@ -78,6 +79,7 @@ class BasePage(object):
             logger.error('Can not find element: %s in 10 seconds' % locator[1])
             raise
 
+    @fail_screenshot
     def find_elements(self, *locator):
         """
         根据locator查找页面上的所有元素
@@ -89,12 +91,14 @@ class BasePage(object):
             return elements
         except NoSuchElementException:
             logger.error('Can not find the element: %s' % locator[1])
-            self.get_screen_img()
             raise
         except TimeoutException:
             logger.error('Can not find the element: %s in 10 seconds' % locator[1])
-            self.get_screen_img()
             raise
+
+    @abstractmethod
+    def page_confirm(self):
+        raise NotImplementedError('请实现确认是否是当前页面的逻辑')
 
     def get_screen_img(self):
         """
@@ -112,6 +116,7 @@ class BasePage(object):
         except ScreenshotException as e:
             logger.error("截图失败 %s" % e)
 
+    @fail_screenshot
     def click(self, locator):
         """
         根据locator点击元素
@@ -124,9 +129,9 @@ class BasePage(object):
             element.click()
         except ElementNotVisibleException as e:
             logger.error("无法点击元素: %s" % e)
-            self.get_screen_img()
             raise
 
+    @fail_screenshot
     def clear(self, locator):
         """输入文本框清空操作"""
         logger.info('Clear the input %s: %s ......' % (locator[0], locator[1]))
@@ -136,9 +141,9 @@ class BasePage(object):
             logger.info('清空文本框 ......')
         except Exception as e:
             logger.error("Failed to clear in input box with %s" % e)
-            self.get_screen_img()
             raise
 
+    @fail_screenshot
     def send_keys(self, locator, text):
         """
         文本框输入内容
@@ -152,9 +157,9 @@ class BasePage(object):
             element.send_keys(text)
         except Exception as e:
             logger.error("Failed to type in input box with %s" % e)
-            self.get_screen_img()
             raise
 
+    @fail_screenshot
     def move_to_element(self, locator):
         """
         鼠标悬停操作
@@ -168,9 +173,9 @@ class BasePage(object):
             ActionChains(self.driver).move_to_element(element).perform()
         except Exception as e:
             logger.error('Move the mouse to the locator appear error {}'.format(e))
-            self.get_screen_img()
             raise
 
+    @fail_screenshot
     def drag_loc_from_to(self, source, target):
         """
         At source WebElement hold the left mouse drag to the target WebElement then release
@@ -185,7 +190,6 @@ class BasePage(object):
             ActionChains(self.driver).drag_and_drop(ele_source, ele_target).perform()
         except Exception as e:
             logger.error('Click the and then move element error: {}'.format(e))
-            self.get_screen_img()
             raise
 
     def back(self):
