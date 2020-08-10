@@ -6,6 +6,7 @@ import time
 import allure
 import os
 from abc import ABCMeta, abstractmethod
+from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.select import Select
 from selenium.common.exceptions import *
@@ -39,10 +40,15 @@ class BasePage(metaclass=ABCMeta):
         """
         :param driver:打开浏览器驱动
         """
-        self.driver = driver
+        self.driver: WebDriver = driver
         self.accept_next_alert = True
         self.case = TestCase()
         self.path = root_path
+        self.page_confirm()
+
+    @abstractmethod
+    def page_confirm(self):
+        raise NotImplementedError('请实现确认是否是当前页面的逻辑')
 
     def open_url(self, url):
         """
@@ -96,10 +102,6 @@ class BasePage(metaclass=ABCMeta):
             logger.error('Can not find the element: %s in 10 seconds' % locator[1])
             raise
 
-    @abstractmethod
-    def page_confirm(self):
-        raise NotImplementedError('请实现确认是否是当前页面的逻辑')
-
     def get_screen_img(self):
         """
         截图且保存在screenshots目录下
@@ -108,7 +110,6 @@ class BasePage(metaclass=ABCMeta):
         now = time.strftime("%Y-%m-%d_%H_%M_%S")
         file_name = now + '.png'
         screen_path = os.path.join(self.path, 'screenshots', file_name)
-
         try:
             self.driver.get_screenshot_as_file(screen_path)
             allure.attach.file(screen_path, attachment_type=allure.attachment_type.PNG)
@@ -231,6 +232,7 @@ class BasePage(metaclass=ABCMeta):
         """获取当前页面的url"""
         return self.driver.current_url
 
+    @fail_screenshot
     def get_text(self, locator):
         """获取文本"""
         try:
@@ -241,6 +243,7 @@ class BasePage(metaclass=ABCMeta):
             self.get_screen_img()
             raise
 
+    @fail_screenshot
     def get_attribute(self, locator, attribute_name):
         """获取属性"""
         try:
@@ -258,6 +261,7 @@ class BasePage(metaclass=ABCMeta):
         except JavascriptException as e:
             logger.error('Execute js error: {}'.format(e))
 
+    @fail_screenshot
     def js_focus_element(self, locator):
         """聚焦元素"""
         try:
@@ -276,6 +280,7 @@ class BasePage(metaclass=ABCMeta):
         js = "window.scrollTo(0,document.body.scrollHeight)"
         self.driver.execute_script(js)
 
+    @fail_screenshot
     def select_by_index(self, locator, index):
         """通过索引,index是索引第几个，从0开始"""
         try:
@@ -286,6 +291,7 @@ class BasePage(metaclass=ABCMeta):
             self.get_screen_img()
             raise
 
+    @fail_screenshot
     def select_by_value(self, locator, value):
         """下拉框通过value属性选择"""
         try:
@@ -296,6 +302,7 @@ class BasePage(metaclass=ABCMeta):
             self.get_screen_img()
             raise e
 
+    @fail_screenshot
     def select_by_text(self, locator, choice_text):
         """下拉框通过文本值定位"""
         try:
@@ -306,6 +313,7 @@ class BasePage(metaclass=ABCMeta):
             self.get_screen_img()
             raise
 
+    @fail_screenshot
     def is_text_in_element(self, locator, text, timeout=10):
         """判断文本在元素里，没定位到元素返回False，定位到元素返回判断结果布尔值"""
         try:
@@ -316,6 +324,7 @@ class BasePage(metaclass=ABCMeta):
             logger.info("元素没有定位到:" + str(locator))
             return False
 
+    @fail_screenshot
     def is_text_in_value(self, locator, value, timeout=10):
         """
         判断元素的value值，没定位到元素返回false,定位到返回判断结果布尔值
@@ -329,22 +338,26 @@ class BasePage(metaclass=ABCMeta):
             logger.info("元素没定位到：" + str(locator))
             return False
 
+    @fail_screenshot
     def is_title(self, title, timeout=10):
         """判断title完全等于"""
         result = WebDriverWait(self.driver, timeout, 0.5).until(EC.title_is(title))
         return result
 
+    @fail_screenshot
     def is_title_contains(self, title, timeout=10):
         """判断title包含"""
         result = WebDriverWait(self.driver, timeout, 0.5).until(EC.title_contains(title))
         return result
 
+    @fail_screenshot
     def is_selected(self, locator, timeout=10):
         """判断元素被选中，返回布尔值"""
         result = WebDriverWait(self.driver, timeout, 0.5).until(
             EC.element_located_to_be_selected(locator))
         return result
 
+    @fail_screenshot
     def is_selected_be(self, locator, selected=True, timeout=10):
         """判断元素的状态，selected是期望的参数true/False
         返回布尔值"""
@@ -362,7 +375,7 @@ class BasePage(metaclass=ABCMeta):
     def alert_accept(self):
         """接受alert"""
         try:
-            alert = self.driver.switch_to_alert()
+            alert = self.driver.switch_to.window()
             logger.info('alert test is %s' % alert.text)
             alert.accept()
         except UnexpectedAlertPresentException as e:
@@ -370,6 +383,7 @@ class BasePage(metaclass=ABCMeta):
         except NoAlertPresentException as e1:
             logger.error('Alert accept error: {}'.format(e1))
 
+    @fail_screenshot
     def is_visibility(self, locator, timeout=10):
         """元素可见返回本身，不可见返回False"""
         try:
@@ -379,6 +393,7 @@ class BasePage(metaclass=ABCMeta):
             logger.info(e)
             return False
 
+    @fail_screenshot
     def is_invisibility(self, locator, timeout=10):
         """元素可见返回False，不可见返回True，没找到元素也返回True"""
         result = WebDriverWait(self.driver, timeout, 0.5).until(

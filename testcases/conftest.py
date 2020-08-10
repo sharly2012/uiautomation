@@ -9,6 +9,7 @@ from common.baseutil import root_path
 from settings import *
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver import DesiredCapabilities
 
 DRIVER_MAPPING = {
     "MacOS": {
@@ -44,7 +45,7 @@ def pytest_addoption(parser):
     )
 
 
-@pytest.fixture(scope='class')
+@pytest.fixture(scope='module')
 def driver(request):
     system_name = request.config.getoption("--system")
     browser_type = request.config.getoption("--browser")
@@ -52,7 +53,6 @@ def driver(request):
     logger.info('Current system name is {}'.format(system_name))
     logger.info('Current browser type is {}'.format(browser_type))
     logger.info('Current environment is {}'.format(environment))
-    log_path = os.path.join(root_path, 'logs', 'service_log.log')
     driver_path = os.path.join(root_path, 'driver', system_name, DRIVER_MAPPING.get(system_name).get(browser_type))
     options = Options()
     # Set the default download folder
@@ -67,17 +67,37 @@ def driver(request):
         options.add_argument('--disable-dev-shm-usage')
     if environment == "Prepub":
         options.add_argument('--proxy-server=%s' % proxy_server)
-    driver = webdriver.Chrome(executable_path=driver_path, options=options, service_log_path=log_path)
-    driver.set_window_size(1920, 1080)
-    driver.implicitly_wait(10)
+    # for local test
+    # driver = webdriver.Chrome(executable_path=driver_path)
+    # driver.set_window_size(1920, 1080)
+
+    # for local selenium server java -jar
+    # driver = webdriver.Remote(
+    #     command_executor='http://127.0.0.1:4444/wd/hub',
+    #     desired_capabilities=DesiredCapabilities.CHROME,
+    #     browser_profile=None,
+    #     options=options,
+    #     keep_alive=True
+    # )
+    # driver.set_window_size(1920, 1080)
+
+    # just for docker
+    driver = webdriver.Remote(
+        command_executor='http://10.10.60.88:4444/wd/hub',
+        desired_capabilities=DesiredCapabilities.CHROME,
+    )
+    driver.set_window_size(1360, 1020)
+
+    driver.implicitly_wait(30)
+    driver.set_page_load_timeout(30)
     driver.get(base_url)
 
-    def fn():
+    def close_driver():
         logger.info('All the test cases execute done')
         driver.close()
         driver.quit()
 
-    request.addfinalizer(fn)
+    request.addfinalizer(close_driver)
     return driver
 
 
